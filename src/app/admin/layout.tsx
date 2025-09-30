@@ -43,7 +43,7 @@ function AdminNav() {
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">Admin</p>
             <p className="text-xs leading-none text-muted-foreground">
-              admin@barberflow.com
+              admin@xbarber.com
             </p>
           </div>
         </DropdownMenuLabel>
@@ -76,7 +76,7 @@ export default function AdminLayout({
           <div className="flex items-center gap-2">
             <Icons.logo className="size-6 text-sidebar-primary-foreground" />
             <span className="text-lg font-semibold text-sidebar-primary-foreground">
-              BarberFlow (Admin)
+              XBARBER (Admin)
             </span>
           </div>
         </SidebarHeader>

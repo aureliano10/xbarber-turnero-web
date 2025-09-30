@@ -82,7 +82,7 @@ export default function DashboardLayout({
           <div className="flex items-center gap-2">
             <Icons.logo className="size-6 text-sidebar-primary-foreground" />
             <span className="text-lg font-semibold text-sidebar-primary-foreground">
-              BarberFlow
+              XBARBER
             </span>
           </div>
         </SidebarHeader>
