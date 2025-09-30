@@ -35,12 +35,12 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Reservar un Turno</h1>
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <h1 className="text-2xl font-bold mb-4 text-center">Reservar un Turno</h1>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <Card>
-            <CardHeader>
+            <CardHeader className="text-center">
               <CardTitle>Selecciona Fecha y Hora</CardTitle>
               <CardDescription>Elige un día y luego una hora disponible.</CardDescription>
             </CardHeader>
@@ -55,7 +55,7 @@ export default function DashboardPage() {
                 />
               </div>
               <div>
-                <h3 className="text-lg font-medium mb-4 text-center md:text-left">
+                <h3 className="text-lg font-medium mb-4 text-center">
                   Horas Disponibles para {date?.toLocaleDateString('es-ES') || '...'}
                 </h3>
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -75,10 +75,10 @@ export default function DashboardPage() {
         </div>
         <div className="lg:col-span-1">
           <Card>
-            <CardHeader>
+            <CardHeader className="text-center">
               <CardTitle>Resumen de tu Turno</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 text-center">
               <div>
                 <p className="font-medium">Fecha</p>
                 <p className="text-muted-foreground">{date ? date.toLocaleDateString('es-ES') : 'No seleccionada'}</p>

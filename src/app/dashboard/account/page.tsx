@@ -18,10 +18,10 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Mi Cuenta</h1>
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <h1 className="text-2xl font-bold mb-4 text-center">Mi Cuenta</h1>
       <Card>
-        <CardHeader>
+        <CardHeader className="text-center">
           <CardTitle>Información del Perfil</CardTitle>
           <CardDescription>
             Actualiza tu información personal aquí.
