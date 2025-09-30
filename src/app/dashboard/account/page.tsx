@@ -18,7 +18,7 @@ export default function AccountPage() {
   }
 
   return (
-    <div>
+    <div className="w-full max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Mi Cuenta</h1>
       <Card>
         <CardHeader>

@@ -17,7 +17,7 @@ const statusConfig = {
 
 export default function AppointmentsPage() {
   return (
-    <div>
+    <div className="w-full max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Mis Turnos</h1>
       <Card>
         <CardHeader>
@@ -29,7 +29,7 @@ export default function AppointmentsPage() {
             {appointments.map((appt) => {
               const config = statusConfig[appt.status as keyof typeof statusConfig];
               return (
-                <div key={appt.id} className="flex items-center justify-between p-4 rounded-lg border bg-card">
+                <div key={appt.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-lg border bg-card gap-4">
                   <div>
                     <p className="font-semibold">{appt.service}</p>
                     <p className="text-sm text-muted-foreground">{appt.date} - {appt.time}</p>
