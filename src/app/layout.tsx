@@ -1,10 +1,17 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
+import "./globals.css";
+import { Toaster } from "@/components/ui/toaster"
 
-export const metadata: Metadata = {
-  title: 'XBARBER',
-  description: 'Gestión de turnos para tu barbería.',
+import { Inter } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+})
+
+export const metadata = {
+  title: "XBARBER",
+  description: "Reserva tu turno en XBARBER",
 };
 
 export default function RootLayout({
@@ -14,15 +21,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className="dark">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="font-body antialiased">
+      <head />
+      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
+          inter.variable
+        )}
+        suppressHydrationWarning={true}
+      >
         {children}
         <Toaster />
       </body>

@@ -1,42 +1,83 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { CalendarDays, Clock, Scissors } from "lucide-react";
 
-// Mock data for available times
-const availableTimes = [
-  '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00',
-  '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'
-];
+const morningTimes = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00'];
+
+const getAvailableTimes = (date: Date | undefined): string[] => {
+  if (!date) return [];
+
+  const day = date.getDay();
+  let afternoonTimes: string[] = [];
+
+  // Sunday
+  if (day === 0) {
+    return [];
+  }
+
+  // Monday to Thursday
+  if (day >= 1 && day <= 4) {
+    afternoonTimes = ['15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'];
+  }
+
+  // Friday and Saturday
+  if (day === 5 || day === 6) {
+    afternoonTimes = ['15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'];
+  }
+
+  return [...morningTimes, ...afternoonTimes];
+};
+
+const services = ['Corte', 'Corte y Barba', 'Solo Barba'];
 
 export default function DashboardPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [selectedService, setSelectedService] = useState<string | null>(null);
   const { toast } = useToast();
 
+  const availableTimes = useMemo(() => getAvailableTimes(date), [date]);
+
+  const handleDateSelect = (newDate: Date | undefined) => {
+    setDate(newDate);
+    setSelectedTime(null);
+  };
+
   const handleBooking = () => {
-    if (date && selectedTime) {
+    if (date && selectedTime && selectedService) {
       toast({
         title: "Turno solicitado",
-        description: `Tu turno para el ${date.toLocaleDateString('es-ES')} a las ${selectedTime} ha sido solicitado. Recibirás una confirmación por correo.`,
+        description: `Tu turno para ${selectedService.toLowerCase()} el ${date.toLocaleDateString('es-ES')} a las ${selectedTime} ha sido solicitado.`,
       });
       setSelectedTime(null);
+      setSelectedService(null);
     } else {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Por favor, selecciona una fecha y una hora para tu turno.",
+        description: "Por favor, selecciona fecha, hora y servicio.",
       });
     }
   };
 
+ const isDateInCurrentWeek = (d: Date) => {
+    const today = new Date();
+    const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 1));
+    firstDayOfWeek.setHours(0, 0, 0, 0);
+    const lastDayOfWeek = new Date(firstDayOfWeek);
+    lastDayOfWeek.setDate(lastDayOfWeek.getDate() + 6);
+    lastDayOfWeek.setHours(23, 59, 59, 999);
+    
+    return d >= firstDayOfWeek && d <= lastDayOfWeek;
+  };
+
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-      <h1 className="text-2xl font-bold mb-4 text-center">Reservar un Turno</h1>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <Card>
@@ -44,22 +85,22 @@ export default function DashboardPage() {
               <CardTitle>Selecciona Fecha y Hora</CardTitle>
               <CardDescription>Elige un día y luego una hora disponible.</CardDescription>
             </CardHeader>
-            <CardContent className="grid md:grid-cols-2 gap-8">
+            <CardContent className="flex flex-col items-center gap-8">
               <div className="flex justify-center">
                 <Calendar
                   mode="single"
                   selected={date}
-                  onSelect={setDate}
+                  onSelect={handleDateSelect}
                   className="rounded-md border"
-                  disabled={(day) => day < new Date(new Date().setDate(new Date().getDate() - 1)) }
+                  disabled={(day) => day.getDay() === 0 || day < new Date(new Date().setDate(new Date().getDate() - 1)) || !isDateInCurrentWeek(day)}
                 />
               </div>
-              <div>
+              <div className="w-full max-w-md">
                 <h3 className="text-lg font-medium mb-4 text-center">
                   Horas Disponibles para {date?.toLocaleDateString('es-ES') || '...'}
                 </h3>
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                  {availableTimes.map((time) => (
+                  {availableTimes.length > 0 ? availableTimes.map((time) => (
                     <Button
                       key={time}
                       variant={selectedTime === time ? "default" : "outline"}
@@ -67,39 +108,53 @@ export default function DashboardPage() {
                     >
                       {time}
                     </Button>
-                  ))}
+                  )) : <p>No hay turnos disponibles para este día.</p>}
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
         <div className="lg:col-span-1">
-          <Card>
+           <Card>
             <CardHeader className="text-center">
               <CardTitle>Resumen de tu Turno</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 text-center">
-              <div>
-                <p className="font-medium">Fecha</p>
-                <p className="text-muted-foreground">{date ? date.toLocaleDateString('es-ES') : 'No seleccionada'}</p>
+            <CardContent className="space-y-4">
+               <div className="space-y-2">
+                <label className="font-medium flex items-center gap-3"><Scissors className="h-5 w-5 text-muted-foreground" />Servicio</label>
+                <Select onValueChange={setSelectedService} value={selectedService || ''}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un servicio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {services.map(service => (
+                      <SelectItem key={service} value={service}>{service}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div>
-                <p className="font-medium">Hora</p>
-                <p className="text-muted-foreground">{selectedTime || 'No seleccionada'}</p>
+              <div className="flex items-center justify-between rounded-md border px-4 py-3 bg-muted/50">
+                <div className="flex items-center gap-3">
+                  <CalendarDays className="h-5 w-5 text-muted-foreground" />
+                  <span className="font-medium">Fecha</span>
+                </div>
+                <span className="text-muted-foreground">{date ? date.toLocaleDateString('es-ES') : '-'}</span>
               </div>
-              <div>
-                <label htmlFor="notes" className="font-medium">Preferencias o Notas</label>
-                <Textarea id="notes" placeholder="Ej: corte degradado, solo barba, etc." className="mt-2"/>
+              <div className="flex items-center justify-between rounded-md border px-4 py-3 bg-muted/50">
+                <div className="flex items-center gap-3">
+                  <Clock className="h-5 w-5 text-muted-foreground" />
+                  <span className="font-medium">Hora</span>
+                </div>
+                <span className="text-muted-foreground">{selectedTime || '-'}</span>
               </div>
             </CardContent>
             <CardFooter>
-              <Button className="w-full" onClick={handleBooking} disabled={!date || !selectedTime}>
+              <Button className="w-full" onClick={handleBooking} disabled={!date || !selectedTime || !selectedService}>
                 Solicitar Turno
               </Button>
             </CardFooter>
           </Card>
         </div>
       </div>
-    </div>
   );
 }

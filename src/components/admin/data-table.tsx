@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import {
   ColumnDef,
@@ -21,20 +21,24 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 
+// 1. La interfaz ahora acepta una propiedad `meta` opcional.
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
-  data: TData[]
+  data: TData[],
+  meta?: any
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  meta, // 2. Se extrae `meta` de las props.
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   
   const table = useReactTable({
     data,
     columns,
+    meta, // 3. Se pasa `meta` directamente a la configuración de la tabla.
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,

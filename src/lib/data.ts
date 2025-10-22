@@ -6,7 +6,6 @@ export type Appointment = {
   time: string
   status: "pending" | "approved" | "rejected"
   service: string
-  preferences: string
 }
 
 export const appointments: Appointment[] = [
@@ -18,7 +17,6 @@ export const appointments: Appointment[] = [
     time: "10:00",
     status: "pending",
     service: "Corte y Barba",
-    preferences: "Fade en los costados, barba bien recortada y perfilada.",
   },
   {
     id: "APP-489e1d42",
@@ -27,8 +25,7 @@ export const appointments: Appointment[] = [
     date: "2024-08-01",
     time: "11:30",
     status: "pending",
-    service: "Corte de pelo",
-    preferences: "Clásico, con tijera. Nada de máquina en la parte de arriba.",
+    service: "Corte",
   },
   {
     id: "APP-f6e3c8a1",
@@ -37,8 +34,7 @@ export const appointments: Appointment[] = [
     date: "2024-08-02",
     time: "14:00",
     status: "approved",
-    service: "Coloración",
-    preferences: "Solo retoque de raíces, mismo color de siempre.",
+    service: "Corte",
   },
   {
     id: "APP-bc7a4e8d",
@@ -47,8 +43,7 @@ export const appointments: Appointment[] = [
     date: "2024-08-02",
     time: "16:00",
     status: "rejected",
-    service: "Afeitado Clásico",
-    preferences: "Piel sensible, usar productos sin alcohol.",
+    service: "Solo Barba",
   },
   {
     id: "APP-9d5b7c6f",
@@ -57,8 +52,7 @@ export const appointments: Appointment[] = [
     date: "2024-08-03",
     time: "09:30",
     status: "approved",
-    service: "Corte de pelo",
-    preferences: "Un cambio de look, corte bob.",
+    service: "Corte y Barba",
   },
    {
     id: "APP-3a9c8b5e",
@@ -67,7 +61,6 @@ export const appointments: Appointment[] = [
     date: "2024-08-04",
     time: "12:00",
     status: "pending",
-    service: "Tratamiento capilar",
-    preferences: "Hidratación profunda. Tengo el pelo algo seco últimamente.",
+    service: "Corte y Barba",
   },
 ];
