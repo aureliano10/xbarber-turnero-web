@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { CalendarDays, Clock, Scissors, LogOut } from "lucide-react";
 import { auth } from "@/lib/firebase";
+import { es } from 'date-fns/locale';
 
 const morningTimes = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00'];
 
@@ -16,9 +17,19 @@ const getAvailableTimes = (date: Date | undefined): string[] => {
   if (!date) return [];
   const day = date.getDay();
   let afternoonTimes: string[] = [];
-  if (day === 0) return [];
-  if (day >= 1 && day <= 4) afternoonTimes = ['15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'];
-  if (day === 5 || day === 6) afternoonTimes = ['15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'];
+  // Sunday (0) and Monday (1) are disabled
+  if (day === 0 || day === 1) return [];
+
+  // Tuesday (2) to Thursday (4)
+  if (day >= 2 && day <= 4) {
+    afternoonTimes = ['15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'];
+  }
+
+  // Friday (5) and Saturday (6)
+  if (day === 5 || day === 6) {
+    afternoonTimes = ['15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'];
+  }
+  
   return [...morningTimes, ...afternoonTimes];
 };
 
@@ -47,16 +58,6 @@ const ClientDashboard = () => {
     }
   };
 
-  const isDateInCurrentWeek = (d: Date) => {
-    const today = new Date();
-    const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 1));
-    firstDayOfWeek.setHours(0, 0, 0, 0);
-    const lastDayOfWeek = new Date(firstDayOfWeek);
-    lastDayOfWeek.setDate(lastDayOfWeek.getDate() + 6);
-    lastDayOfWeek.setHours(23, 59, 59, 999);
-    return d >= firstDayOfWeek && d <= lastDayOfWeek;
-  };
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-2">
@@ -67,12 +68,24 @@ const ClientDashboard = () => {
           </CardHeader>
           <CardContent className="flex flex-col items-center gap-8">
              <div className="flex justify-center">
-              <Calendar mode="single" selected={date} onSelect={handleDateSelect} className="rounded-md border" disabled={(day) => day.getDay() === 0 || day < new Date(new Date().setDate(new Date().getDate() - 1)) || !isDateInCurrentWeek(day)} />
+              <Calendar 
+                locale={es}
+                mode="single" 
+                selected={date} 
+                onSelect={handleDateSelect} 
+                className="rounded-md border" 
+                disabled={(day) => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    return day.getDay() === 0 || day.getDay() === 1 || day < today;
+                }} 
+                fromMonth={new Date()}
+              />
             </div>
             <div className="w-full max-w-md">
               <h3 className="text-lg font-medium mb-4 text-center">Horas Disponibles para {date?.toLocaleDateString('es-ES') || '...'}</h3>
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                {availableTimes.length > 0 ? availableTimes.map((time) => (<Button key={time} variant={selectedTime === time ? "default" : "outline"} onClick={() => setSelectedTime(time)}>{time}</Button>)) : <p>No hay turnos disponibles.</p>}
+                {availableTimes.length > 0 ? availableTimes.map((time) => (<Button key={time} variant={selectedTime === time ? "default" : "outline"} onClick={() => setSelectedTime(time)}>{time}</Button>)) : <p>No hay turnos disponibles para este día.</p>}
               </div>
             </div>
           </CardContent>
