@@ -13,16 +13,14 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { Menu, LogOut, Calendar, Shield } from 'lucide-react'; // Eliminado el ícono de History
+// --- MODIFICADO: Se importa el nuevo ícono ---
+import { Menu, LogOut, Calendar, Shield, BookMarked } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-// --- Items del menú de navegación (MODIFICADO) ---
 const navItems = [
   { href: '/dashboard', label: 'Nuevo Turno', icon: Calendar },
-  // Se eliminó el item de 'Mi Historial'
 ];
 
-// --- Componente principal del Sidebar ---
 export function Sidebar() {
   const { userData, logout } = useAuth();
 
@@ -32,8 +30,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="hidden md:flex md:flex-col md:w-64 border-r bg-background">
-      {/* --- Perfil de Usuario (Visible en Desktop) --- */}
+    <aside className="hidden md:flex md:flex-col md:w-64 border-r bg-background h-screen sticky top-0">
       {userData && (
         <div className="flex items-center p-4 border-b">
           <Avatar className="h-10 w-10 mr-4">
@@ -51,8 +48,12 @@ export function Sidebar() {
         {navItems.map((item) => (
           <NavItem key={item.href} href={item.href} label={item.label} icon={item.icon} />
         ))}
+        {/* --- MODIFICADO: Se añade el enlace a la Agenda --- */}
         {userData?.role === 'admin' && (
-          <NavItem href="/admin" label="Admin Panel" icon={Shield} />
+          <>
+            <NavItem href="/admin" label="Admin Panel" icon={Shield} />
+            <NavItem href="/admin/agenda" label="Agenda" icon={BookMarked} />
+          </>
         )}
       </nav>
 
@@ -66,7 +67,6 @@ export function Sidebar() {
   );
 }
 
-// --- Componente para la Navegación Móvil (Menú Hamburguesa) ---
 export function MobileNav() {
   const { userData, logout } = useAuth();
   
@@ -84,13 +84,11 @@ export function MobileNav() {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="flex flex-col w-64 p-0">
-        {/* Título y Descripción para accesibilidad */}
         <SheetHeader>
           <SheetTitle className="sr-only">Menú Principal</SheetTitle>
           <SheetDescription className="sr-only">Navega por las secciones de la aplicación.</SheetDescription>
         </SheetHeader>
 
-        {/* Perfil de Usuario (Móvil) */}
         {userData && (
           <div className="flex items-center p-4 border-b">
             <Avatar className="h-10 w-10 mr-4">
@@ -108,8 +106,12 @@ export function MobileNav() {
           {navItems.map((item) => (
             <NavItem key={item.href} href={item.href} label={item.label} icon={item.icon} />
           ))}
+          {/* --- MODIFICADO: Se añade el enlace a la Agenda (móvil) --- */}
           {userData?.role === 'admin' && (
-            <NavItem href="/admin" label="Admin Panel" icon={Shield} />
+            <>
+              <NavItem href="/admin" label="Admin Panel" icon={Shield} />
+              <NavItem href="/admin/agenda" label="Agenda" icon={BookMarked} />
+            </>
           )}
         </nav>
 
@@ -124,7 +126,6 @@ export function MobileNav() {
   );
 }
 
-// --- Componente de un solo item de navegación ---
 function NavItem({ href, label, icon: Icon }: { href: string; label: string; icon: React.ElementType }) {
   const pathname = usePathname();
   const isActive = pathname === href;

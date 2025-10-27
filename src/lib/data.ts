@@ -11,10 +11,10 @@ import {
   Timestamp,
   serverTimestamp,
   getDoc,
+  onSnapshot,
 } from 'firebase/firestore';
 import { db } from './firebase';
 
-// --- Estructura de un usuario (para referencia) ---
 interface UserProfile {
   uid: string;
   displayName: string;
@@ -22,7 +22,6 @@ interface UserProfile {
   role: string;
 }
 
-// --- Estructura de un turno, ahora con datos de usuario anidados ---
 export interface Appointment {
   id: string;
   userId: string;
@@ -30,20 +29,30 @@ export interface Appointment {
   appointmentDate: Timestamp;
   createdAt: Timestamp;
   status: 'pending' | 'approved' | 'rejected';
-  // Datos denormalizados del usuario para acceso rápido
   customerName: string; 
   email: string;
 }
 
 export type AppointmentStatus = 'pending' | 'approved' | 'rejected';
 
-// --- Tipo para crear un nuevo turno ---
 export type NewAppointmentData = Omit<Appointment, 'id' | 'createdAt' | 'status'>;
 
 const appointmentsCollection = collection(db, 'appointments');
 const usersCollection = collection(db, 'users');
 
-// --- Obtener TODOS los turnos (para el Admin) ---
+export const getAppointmentsSubscription = (callback: (appointments: Appointment[]) => void) => {
+  const unsubscribe = onSnapshot(appointmentsCollection, (snapshot) => {
+    const appointments: Appointment[] = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...(doc.data() as Omit<Appointment, 'id'>),
+    }));
+    callback(appointments);
+  });
+
+  return unsubscribe;
+};
+
+
 export const getAppointments = async (): Promise<Appointment[]> => {
   try {
     const snapshot = await getDocs(appointmentsCollection);
@@ -58,7 +67,6 @@ export const getAppointments = async (): Promise<Appointment[]> => {
   }
 };
 
-// --- Obtener los turnos de UN usuario específico ---
 export const getUserAppointments = async (userId: string): Promise<Appointment[]> => {
   try {
     const q = query(appointmentsCollection, where("userId", "==", userId));
@@ -73,22 +81,29 @@ export const getUserAppointments = async (userId: string): Promise<Appointment[]
   }
 };
 
-// --- Añadir un nuevo turno ---
 export const addAppointment = async (appointmentData: NewAppointmentData): Promise<string | null> => {
   try {
-    const docRef = await addDoc(appointmentsCollection, {
+    const userRef = doc(db, 'users', appointmentData.userId);
+    const userSnap = await getDoc(userRef);
+    const userName = userSnap.exists() ? userSnap.data().displayName : 'Nombre no encontrado';
+
+    const finalAppointmentData = {
       ...appointmentData,
-      status: 'pending',
+      customerName: userName || 'Usuario sin nombre',
+      status: 'pending' as const,
       createdAt: serverTimestamp(),
-    });
+    };
+
+    const docRef = await addDoc(appointmentsCollection, finalAppointmentData);
     return docRef.id;
+
   } catch (error) {
     console.error("❌ Firestore Write Error:", error);
     return null;
   }
 };
 
-// --- Actualizar el estado de un turno ---
+
 export const updateAppointmentStatus = async (appointmentId: string, status: AppointmentStatus): Promise<boolean> => {
   try {
     const appointmentRef = doc(db, 'appointments', appointmentId);
@@ -100,7 +115,28 @@ export const updateAppointmentStatus = async (appointmentId: string, status: App
   }
 };
 
-// --- Eliminar un turno ---
+// --- NUEVA FUNCIÓN: Para corregir nombres en turnos existentes ---
+export const updateAppointmentCustomerName = async (appointmentId: string, userId: string): Promise<boolean> => {
+  try {
+    const userRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userRef);
+    
+    if (userSnap.exists()) {
+      const correctName = userSnap.data().displayName;
+      if (correctName) {
+        const appointmentRef = doc(db, 'appointments', appointmentId);
+        await updateDoc(appointmentRef, { customerName: correctName });
+        return true;
+      }
+    }
+    return false;
+  } catch (error) {
+    console.error(`Error correcting customer name for appointment ${appointmentId}:`, error);
+    return false;
+  }
+};
+
+
 export const deleteAppointment = async (appointmentId: string): Promise<boolean> => {
   try {
     const appointmentRef = doc(db, 'appointments', appointmentId);

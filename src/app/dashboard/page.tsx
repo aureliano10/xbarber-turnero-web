@@ -33,12 +33,11 @@ import {
 import { Loader2 } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
 
-// --- Helpers para la lógica de la semana ---
 const getWeekRange = (date: Date) => {
   const today = new Date(date);
   today.setHours(0, 0, 0, 0);
 
-  const dayOfWeek = today.getDay(); // Sunday = 0, Saturday = 6
+  const dayOfWeek = today.getDay();
   
   const startOfWeek = new Date(today);
   startOfWeek.setDate(today.getDate() - dayOfWeek);
@@ -50,21 +49,20 @@ const getWeekRange = (date: Date) => {
   return { start: startOfWeek, end: endOfWeek };
 };
 
-// --- Schema de validación para el formulario ---
 const formSchema = z.object({
   service: z.string({ required_error: "Por favor, selecciona un servicio." }),
   date: z.date({ required_error: "Por favor, selecciona una fecha." }),
   time: z.string({ required_error: "Por favor, selecciona una hora." }),
 });
 
+const morningTimes = ["08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30"];
+const afternoonTimes = ["15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00"];
 
-// --- Componente principal de la página de dashboard ---
 export default function DashboardPage() {
   const { userData, loading: authLoading } = useAuth();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // --- MODIFICADO: Estado para almacenar el rango de la semana actual ---
   const [currentWeek, setCurrentWeek] = useState(getWeekRange(new Date()));
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -76,14 +74,12 @@ export default function DashboardPage() {
     }
   });
 
-  // --- Redirección si no está autenticado ---
   useEffect(() => {
     if (!authLoading && !userData) {
       router.push('/login');
     }
   }, [userData, authLoading, router]);
 
-  // --- Manejador para el envío del formulario ---
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!userData) {
       alert("Error: No se pudieron obtener los datos del usuario. Por favor, intenta iniciar sesión de nuevo.");
@@ -164,13 +160,13 @@ export default function DashboardPage() {
                           mode="single"
                           selected={field.value}
                           onSelect={field.onChange}
-                          month={currentWeek.start} // Fija la vista en el mes donde empieza la semana
-                          showOutsideDays={true} // Muestra días de otros meses para completar la semana
+                          month={currentWeek.start}
+                          showOutsideDays={true}
                           disabled={(date) =>
-                            date < today || // Días pasados
-                            date > currentWeek.end || // Días fuera de la semana actual
-                            date.getDay() === 0 || // Domingos
-                            date.getDay() === 1      // Lunes
+                            date < today ||
+                            date > currentWeek.end ||
+                            date.getDay() === 0 ||
+                            date.getDay() === 1
                           }
                           className="border rounded-md"
                         />
@@ -179,23 +175,50 @@ export default function DashboardPage() {
                     </FormItem>
                   )}
                 />
-
+                
+                {/* --- MODIFICADO: Selector de hora con botones --- */}
                 <FormField
                   control={form.control}
                   name="time"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>3. Elige una hora</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!form.watch('date')}>
-                        <FormControl>
-                          <SelectTrigger><SelectValue placeholder="Primero selecciona un día" /></SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {Array.from({ length: 8 }, (_, i) => `${i + 9}:00`).map(time => (
-                            <SelectItem key={time} value={time}>{time}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className={`grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 ${!form.watch('date') ? 'opacity-50 pointer-events-none' : ''}`}>
+                        {/* Turno Mañana */}
+                        <div>
+                          <h4 className="text-md font-semibold mb-2 text-center md:text-left">Turno Mañana</h4>
+                          <div className="grid grid-cols-4 gap-2">
+                            {morningTimes.map(time => (
+                              <Button
+                                key={time}
+                                type="button"
+                                variant={field.value === time ? "default" : "outline"}
+                                onClick={() => field.onChange(time)}
+                                disabled={!form.watch('date')}
+                              >
+                                {time}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                        {/* Turno Tarde */}
+                        <div>
+                          <h4 className="text-md font-semibold mb-2 text-center md:text-left">Turno Tarde</h4>
+                          <div className="grid grid-cols-4 gap-2">
+                            {afternoonTimes.map(time => (
+                              <Button
+                                key={time}
+                                type="button"
+                                variant={field.value === time ? "default" : "outline"}
+                                onClick={() => field.onChange(time)}
+                                disabled={!form.watch('date')}
+                              >
+                                {time}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
