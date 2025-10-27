@@ -1,0 +1,44 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Función para verificar si el usuario es administrador
+    function isAdmin() {
+      // Asumimos que la información del rol está en una colección 'users'
+      // y el ID del documento es el UID de autenticación del usuario.
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // REGLAS PARA LA COLECCIÓN DE USUARIOS
+    match /users/{userId} {
+      // Un usuario puede leer sus propios datos. Un admin puede leer los de cualquiera.
+      allow read: if request.auth.uid == userId || isAdmin();
+      // Un usuario puede crear su propio perfil.
+      allow create: if request.auth.uid == userId;
+       // Un usuario puede actualizar sus propios datos.
+      allow update: if request.auth.uid == userId;
+      // La eliminación de perfiles se deshabilita por seguridad.
+      allow delete: if false;
+    }
+
+    // REGLAS PARA LA COLECCIÓN DE TURNOS
+    match /appointments/{appointmentId} {
+      // LEER: 
+      // Se permite si el usuario es admin (puede ver todos) O 
+      // si el `userId` del turno coincide con el del usuario que lo solicita.
+      allow read: if isAdmin() || request.auth.uid == resource.data.userId;
+
+      // CREAR: 
+      // Se permite si el usuario está autenticado y está creando un turno 
+      // para sí mismo (`userId` en el nuevo documento es su propio UID).
+      allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
+
+      // ACTUALIZAR Y BORRAR:
+      // Solo los administradores pueden actualizar (cambiar estado) o borrar turnos.
+      allow update, delete: if isAdmin();
+    }
+  }
+}
