@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -14,13 +13,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { Menu, LogOut, Calendar, History, Shield } from 'lucide-react';
+import { Menu, LogOut, Calendar, Shield } from 'lucide-react'; // Eliminado el ícono de History
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-// --- Items del menú de navegación ---
+// --- Items del menú de navegación (MODIFICADO) ---
 const navItems = [
   { href: '/dashboard', label: 'Nuevo Turno', icon: Calendar },
-  { href: '/dashboard/history', label: 'Mi Historial', icon: History },
+  // Se eliminó el item de 'Mi Historial'
 ];
 
 // --- Componente principal del Sidebar ---
@@ -85,13 +84,13 @@ export function MobileNav() {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="flex flex-col w-64 p-0">
-        {/* Título y Descripción para accesibilidad (ocultos visualmente) */}
+        {/* Título y Descripción para accesibilidad */}
         <SheetHeader>
           <SheetTitle className="sr-only">Menú Principal</SheetTitle>
           <SheetDescription className="sr-only">Navega por las secciones de la aplicación.</SheetDescription>
         </SheetHeader>
 
-        {/* --- Perfil de Usuario (Visible en Móvil) --- */}
+        {/* Perfil de Usuario (Móvil) */}
         {userData && (
           <div className="flex items-center p-4 border-b">
             <Avatar className="h-10 w-10 mr-4">

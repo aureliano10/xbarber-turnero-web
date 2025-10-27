@@ -33,6 +33,23 @@ import {
 import { Loader2 } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
 
+// --- Helpers para la lógica de la semana ---
+const getWeekRange = (date: Date) => {
+  const today = new Date(date);
+  today.setHours(0, 0, 0, 0);
+
+  const dayOfWeek = today.getDay(); // Sunday = 0, Saturday = 6
+  
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - dayOfWeek);
+
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  endOfWeek.setHours(23, 59, 59, 999);
+
+  return { start: startOfWeek, end: endOfWeek };
+};
+
 // --- Schema de validación para el formulario ---
 const formSchema = z.object({
   service: z.string({ required_error: "Por favor, selecciona un servicio." }),
@@ -46,6 +63,9 @@ export default function DashboardPage() {
   const { userData, loading: authLoading } = useAuth();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // --- MODIFICADO: Estado para almacenar el rango de la semana actual ---
+  const [currentWeek, setCurrentWeek] = useState(getWeekRange(new Date()));
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -77,7 +97,7 @@ export default function DashboardPage() {
 
     const newAppointment: NewAppointmentData = {
       userId: userData.uid,
-      customerName: userData.name || 'Usuario sin nombre',
+      customerName: userData.displayName || 'Usuario sin nombre',
       email: userData.email || '',
       service: values.service,
       appointmentDate: Timestamp.fromDate(appointmentDate),
@@ -94,92 +114,92 @@ export default function DashboardPage() {
     setIsSubmitting(false);
   }
 
-  // --- Renderizado del componente ---
   if (authLoading || !userData) {
-    return <div className="flex justify-center items-center min-h-screen">Cargando...</div>;
+    return <div className="flex justify-center items-center min-h-[calc(100vh-8rem)]">Cargando...</div>;
   }
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   return (
-    // Contenedor principal para centrar y limitar el ancho
-    <div className="w-full flex justify-center">
-      <div className="w-full max-w-2xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="w-full h-full flex items-center justify-center">
+      <div className="w-full max-w-2xl px-4 sm:px-6 lg:px-8">
         <Card>
-          <CardHeader>
+          <CardHeader className="text-center">
             <CardTitle>Solicitar un Nuevo Turno</CardTitle>
-            <CardDescription>Completa el formulario para agendar tu próximo servicio.</CardDescription>
+            <CardDescription>Los turnos solo están disponibles para la semana en curso.</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 gap-6">
-                    {/* Campo de Servicio */}
-                    <FormField
-                      control={form.control}
-                      name="service"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Servicio</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger><SelectValue placeholder="Elige un servicio" /></SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Corte de Pelo">Corte de Pelo</SelectItem>
-                              <SelectItem value="Corte y Barba">Corte y Barba</SelectItem>
-                              <SelectItem value="Solo Barba">Solo Barba</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Campo de Fecha */}
-                      <FormField
-                        control={form.control}
-                        name="date"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Fecha</FormLabel>
-                            <FormControl>
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                initialFocus
-                                disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0)) || date.getDay() === 0}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <FormField
+                  control={form.control}
+                  name="service"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>1. Elige un servicio</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger><SelectValue placeholder="Selecciona el tipo de corte" /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Corte de Pelo">Corte de Pelo</SelectItem>
+                          <SelectItem value="Corte y Barba">Corte y Barba</SelectItem>
+                          <SelectItem value="Solo Barba">Solo Barba</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                      {/* Campo de Hora */}
-                      <FormField
-                        control={form.control}
-                        name="time"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Hora</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                    <SelectTrigger><SelectValue placeholder="Elige una hora" /></SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {/* Horarios de ejemplo. */}
-                                    {Array.from({ length: 8 }, (_, i) => `${i + 9}:00`).map(time => (
-                                        <SelectItem key={time} value={time}>{time}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                </div>
+                <FormField
+                  control={form.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col items-center">
+                      <FormLabel className="mb-2">2. Selecciona una fecha</FormLabel>
+                      <FormControl>
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          month={currentWeek.start} // Fija la vista en el mes donde empieza la semana
+                          showOutsideDays={true} // Muestra días de otros meses para completar la semana
+                          disabled={(date) =>
+                            date < today || // Días pasados
+                            date > currentWeek.end || // Días fuera de la semana actual
+                            date.getDay() === 0 || // Domingos
+                            date.getDay() === 1      // Lunes
+                          }
+                          className="border rounded-md"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>3. Elige una hora</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!form.watch('date')}>
+                        <FormControl>
+                          <SelectTrigger><SelectValue placeholder="Primero selecciona un día" /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Array.from({ length: 8 }, (_, i) => `${i + 9}:00`).map(time => (
+                            <SelectItem key={time} value={time}>{time}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <Button type="submit" disabled={isSubmitting} className="w-full">
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
