@@ -11,11 +11,21 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 export default function AdminPage() {
   const { userData, loading } = useAuth()
   const router = useRouter()
+  
+  // DEBUG TEMPORAL - borrar después
+  console.log('=== DEBUG ADMIN PAGE ===');
+  console.log('loading:', loading);
+  console.log('userData:', userData);
+  console.log('userData?.role:', userData?.role);
+  console.log('Es admin?:', userData?.role === 'admin');
+  console.log('=======================');
+
   const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments)
 
   // Protección: Solo admins pueden acceder
   useEffect(() => {
     if (!loading && (!userData || userData.role !== 'admin')) {
+      console.log('❌ ACCESO DENEGADO - Redirigiendo a dashboard');
       router.push('/dashboard')
     }
   }, [userData, loading, router])

@@ -2,12 +2,17 @@
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarTrigger, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter } from "@/components/ui/sidebar";
 import { LogOut, Settings, User } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext"; // 1. Importar el hook de autenticación
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+
+  // 2. Obtener los datos del usuario y el estado de carga
+  const { userData, loading } = useAuth();
+
   return (
     <SidebarProvider>
       <Sidebar defaultCollapsed={false} side="left">
@@ -32,14 +37,19 @@ export default function DashboardLayout({
         </SidebarContent>
         <SidebarFooter>
            <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton 
-                onClick={() => alert('Acceso denegado: Solo los administradores pueden acceder a esta vista.')}
-                className="opacity-60 cursor-not-allowed">
-                  <Settings className="size-4"/>
-                  <span className="ml-2">Vista Admin</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            
+            {/* 3. Renderizado condicional del botón de Admin */}
+            {!loading && userData?.role === 'admin' && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link href="/admin">
+                    <Settings className="size-4"/>
+                    <span className="ml-2">Vista Admin</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
+
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 <Link href="/">

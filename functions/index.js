@@ -41,3 +41,35 @@ exports.onUserCreate = functions.auth.user().onCreate(async (user) => {
 
   return { message: `User document created for ${email}` };
 });
+
+
+// Callable function to grant admin role to an existing user
+exports.setAdminRole = functions.https.onCall(async (data, context) => {
+  // For production, you should add a check here to ensure only authorized users can run this.
+  // For example:
+  // if (context.auth.token.admin !== true) {
+  //   return { error: "Request not authorized. User must be an administrator to fulfill request." };
+  // }
+
+  const email = data.email;
+  if (!email) {
+    throw new functions.https.HttpsError('invalid-argument', 'The function must be called with one argument "email".');
+  }
+
+  try {
+    console.log(`Looking up user by email: ${email}`);
+    const user = await admin.auth().getUserByEmail(email);
+    
+    console.log(`Setting custom claim for UID: ${user.uid}`);
+    await admin.auth().setCustomUserClaims(user.uid, { admin: true });
+
+    // We can also update the Firestore document for consistency, although the claim is what matters for security.
+    await admin.firestore().collection("users").doc(user.uid).update({ role: 'admin' });
+    
+    console.log(`Successfully made ${email} an admin.`);
+    return { result: `Success! ${email} has been made an admin.` };
+  } catch (error) {
+    console.error(`Error setting admin role for ${email}:`, error);
+    throw new functions.https.HttpsError('internal', 'An error occurred while trying to set the admin role.');
+  }
+});
