@@ -1,8 +1,8 @@
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster"
-
 import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { AuthProvider } from "@/context/AuthContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -22,7 +22,6 @@ export default function RootLayout({
   return (
     <html lang="es" className="dark">
       <head />
-      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <body
         className={cn(
           "min-h-screen bg-background font-sans antialiased",
@@ -30,8 +29,10 @@ export default function RootLayout({
         )}
         suppressHydrationWarning={true}
       >
-        {children}
-        <Toaster />
+        <AuthProvider>
+          <main>{children}</main>
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );

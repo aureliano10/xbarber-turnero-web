@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth, db } from "@/lib/firebase"; // Import db from firebase config
-import { doc, setDoc } from "firebase/firestore"; // Import firestore functions
+import { auth, db } from "@/lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -35,19 +35,26 @@ export default function SignupPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // 1. Update the user's profile in Firebase Auth
+      // Actualizar el perfil con el nombre
       await updateProfile(user, { displayName: name });
 
-      // 2. Create a user document in Firestore
+      // Determinar el rol basado en el email
+      const role = email.toLowerCase() === 'admin@gmail.com' ? 'admin' : 'cliente';
+
+      // Crear documento en Firestore con nombre, email y rol
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         displayName: name,
         email: user.email,
+        role: role,
+        createdAt: new Date().toISOString(),
       });
 
       toast({
         title: "Cuenta Creada",
-        description: "Tu cuenta ha sido creada con éxito.",
+        description: role === 'admin' 
+          ? "Cuenta de administrador creada con éxito." 
+          : "Tu cuenta ha sido creada con éxito.",
       });
       router.push('/dashboard');
     } catch (error: any) {
