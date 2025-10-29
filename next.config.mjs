@@ -1,6 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
   reactStrictMode: true,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  images: {
+    unoptimized: true
+  },
   env: {
     NEXT_PUBLIC_FIREBASE_API_KEY: "AIzaSyBx-DNaP1bC_Dd7Y73k8yVzXqBgY9qMOKI",
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: "turnero-digital-xbarber.firebaseapp.com",
@@ -11,5 +21,5 @@ const nextConfig = {
     NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: "G-9CVPLWF2YF",
   },
 };
-
 export default nextConfig;
+

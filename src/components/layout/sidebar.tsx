@@ -14,7 +14,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 // --- MODIFICADO: Se importa el nuevo ícono ---
-import { Menu, LogOut, Calendar, Shield, BookMarked } from 'lucide-react';
+import { Menu, LogOut, Calendar, Shield, BookMarked, History } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const navItems = [
@@ -48,7 +48,9 @@ export function Sidebar() {
         {navItems.map((item) => (
           <NavItem key={item.href} href={item.href} label={item.label} icon={item.icon} />
         ))}
-        {/* --- MODIFICADO: Se añade el enlace a la Agenda --- */}
+        {userData?.role !== 'admin' && (
+          <NavItem href="/dashboard/history" label="Historial" icon={History} />
+        )}
         {userData?.role === 'admin' && (
           <>
             <NavItem href="/admin" label="Admin Panel" icon={Shield} />
@@ -106,7 +108,9 @@ export function MobileNav() {
           {navItems.map((item) => (
             <NavItem key={item.href} href={item.href} label={item.label} icon={item.icon} />
           ))}
-          {/* --- MODIFICADO: Se añade el enlace a la Agenda (móvil) --- */}
+          {userData?.role !== 'admin' && (
+            <NavItem href="/dashboard/history" label="Historial" icon={History} />
+          )}
           {userData?.role === 'admin' && (
             <>
               <NavItem href="/admin" label="Admin Panel" icon={Shield} />

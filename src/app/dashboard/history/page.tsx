@@ -1,89 +1,148 @@
-
 'use client'
 
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
-import { getUserAppointments, Appointment } from '@/lib/data';
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/context/AuthContext'
+import { useRouter } from 'next/navigation'
+import {
+  getUserAppointments,
+  Appointment,
+} from "@/lib/data"
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Clock, XCircle } from 'lucide-react';
+// Define los posibles estados que se mostrarán en la UI
+type DisplayStatus = 'pending' | 'approved' | 'rejected' | 'expired' | 'completed';
 
-// --- Configuración visual para cada estado de turno ---
-const statusConfig = {
-  approved: { label: 'Aprobado', color: 'bg-green-100 text-green-800 border-green-200', icon: <CheckCircle2 className="mr-2 h-4 w-4" /> },
-  pending: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: <Clock className="mr-2 h-4 w-4" /> },
-  rejected: { label: 'Rechazado', color: 'bg-red-100 text-red-800 border-red-200', icon: <XCircle className="mr-2 h-4 w-4" /> },
-};
+function AppointmentCard({ appointment }: { appointment: Appointment }) {
+  const { service, appointmentDate, status } = appointment;
 
-// --- Componente de la página de Historial ---
+  const appointmentDateTime = appointmentDate?.toDate();
+
+  // Comprueba si la fecha del turno es estrictamente anterior al día de hoy.
+  const isPast = (() => {
+    if (!appointmentDateTime) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Establece la hora a las 00:00:00 del día actual
+    return appointmentDateTime < today;
+  })();
+
+  // Determina el estado a mostrar en la tarjeta
+  let displayStatus: DisplayStatus = status;
+  if (isPast) {
+    if (status === 'pending') {
+      displayStatus = 'expired';
+    } else if (status === 'approved') {
+      displayStatus = 'completed';
+    }
+  }
+
+  // Formatea fecha y hora para la visualización
+  const formattedDate = appointmentDateTime
+    ? appointmentDateTime.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })
+    : "Fecha inválida";
+
+  const formattedTime = appointmentDateTime
+    ? appointmentDateTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+    : "Hora inválida";
+
+  // Define las etiquetas y estilos para cada estado
+  const statusInfo: Record<DisplayStatus, { label: string; classes: string }> = {
+    pending: { label: 'Pendiente', classes: 'bg-yellow-100 text-yellow-800' },
+    approved: { label: 'Aprobado', classes: 'bg-green-100 text-green-800' },
+    rejected: { label: 'Rechazado', classes: 'bg-red-100 text-red-800' },
+    expired: { label: 'Expirado', classes: 'bg-gray-200 text-gray-800' },
+    completed: { label: 'Finalizado', classes: 'bg-blue-100 text-blue-800' },
+  };
+
+  // --- ESTILO VISUAL SUTIL ---_V2
+  // Aplica un fondo negro con 5% de opacidad para un efecto de gris muy sutil.
+  const cardClassName = `w-full mb-4 ${isPast ? 'bg-black/5' : ''}`;
+
+  return (
+    <Card className={cardClassName}>
+      <CardHeader>
+        <CardTitle className="text-lg">{service}</CardTitle>
+        <CardDescription>{`${formattedDate} a las ${formattedTime}`}</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-2 text-sm">
+        <div>
+          <strong>Estado:</strong>
+          <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${statusInfo[displayStatus].classes}`}>
+            {statusInfo[displayStatus].label}
+          </span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+
 export default function HistoryPage() {
-  const { userData, loading: authLoading } = useAuth();
-  const router = useRouter();
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { userData, loading: authLoading } = useAuth()
+  const router = useRouter()
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [dataLoading, setDataLoading] = useState(true)
 
-  // --- Carga inicial de datos ---
   useEffect(() => {
     if (!authLoading) {
       if (!userData) {
         router.push('/login');
-        return;
+      } else {
+        const fetchAppointments = async () => {
+          setDataLoading(true);
+          const fetchedAppointments = await getUserAppointments(userData.uid);
+          // Ordena los turnos por fecha, del más reciente al más antiguo
+          fetchedAppointments.sort((a, b) => {
+            const dateA = a.appointmentDate?.toDate()?.getTime() || 0;
+            const dateB = b.appointmentDate?.toDate()?.getTime() || 0;
+            return dateB - dateA;
+          });
+          setAppointments(fetchedAppointments);
+          setDataLoading(false);
+        };
+        fetchAppointments();
       }
-
-      const fetchAppointments = async () => {
-        setIsLoading(true);
-        const userAppointments = await getUserAppointments(userData.uid);
-        setAppointments(userAppointments);
-        setIsLoading(false);
-      };
-
-      fetchAppointments();
     }
   }, [userData, authLoading, router]);
+  
+  if (authLoading || dataLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+        <p>Cargando historial de turnos...</p>
+      </div>
+    )
+  }
 
-  // --- Renderizado del componente ---
-  if (authLoading || isLoading) {
-    return <div className="flex justify-center items-center min-h-screen">Cargando turnos...</div>;
+  if (!userData) {
+    return null; 
   }
 
   return (
-    <div className="w-full flex justify-center">
-      <div className="w-full max-w-4xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Historial de Turnos</CardTitle>
-            <CardDescription>Aquí puedes ver el historial y el estado de tus solicitudes.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {appointments.length > 0 ? (
-                appointments.map((appt) => {
-                  const config = statusConfig[appt.status];
-                  const aDate = appt.appointmentDate.toDate();
-                  return (
-                    <div key={appt.id} className="flex flex-col sm:flex-row items-center justify-between p-4 rounded-lg border bg-card gap-4 text-center sm:text-left">
-                      <div>
-                        <p className="font-semibold">{appt.service}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {aDate.toLocaleDateString()} - {aDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                      <Badge className={`flex items-center ${config.color}`} variant="outline">
-                        {config.icon}
-                        {config.label}
-                      </Badge>
-                    </div>
-                  );
-                })
-              ) : (
-                <p className="text-center text-muted-foreground">No tienes turnos agendados.</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+    <div className="container mx-auto py-6 px-4">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">Historial de Turnos</h1>
+        <p className="text-muted-foreground">Aquí puedes ver todos los turnos que has solicitado.</p>
+      </div>
+
+      <div>
+        {appointments.length > 0 ? (
+          appointments.map(appointment => (
+            <AppointmentCard 
+              key={appointment.id} 
+              appointment={appointment} 
+            />
+          ))
+        ) : (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>No has solicitado ningún turno todavía.</p>
+          </div>
+        )}
       </div>
     </div>
-  );
+  )
 }
